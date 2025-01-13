@@ -1,11 +1,10 @@
-import openai
+from openai import OpenAI
 import requests
 
-openai.api_key = "..."
-
+openai_client = OpenAI()
 
 def speech_to_text(audio_binary):
-    base_url = 'http://host.docker.internal:1080'
+    base_url = 'https://sn-watson-stt.labs.skills.network'
     api_url = base_url + '/speech-to-text/api/v1/recognize'
     params = {'model': 'en-US_Multimedia'}
     body = audio_binary
@@ -27,7 +26,7 @@ def text_to_speech(text, voice=""):
 
     json_data = {'text': text}
 
-    base_url = 'http://host.docker.internal:1081'
+    base_url = 'https://sn-watson-tts.labs.skills.network'
     api_url = base_url + '/text-to-speech/api/v1/synthesize?output=output_text.wav'
 
     if voice != "" and voice != "default":
@@ -39,12 +38,17 @@ def text_to_speech(text, voice=""):
 
 
 def openai_process_message(user_message):
-    prompt = "\"Act like a personal assistant. You can respond to questions, translate sentences, summarize news, and give recommendations. " + user_message + "\""
-    print("prompt:", prompt)
-    openai_response = openai.Completion.create(
-        model="text-davinci-003", prompt=prompt, max_tokens=4000)
+    prompt = '"Act like a personal assistant. You can respond to questions, translate sentences, summarize news, and give recommendations. ' + user_message + '"'
+    openai_response = openai_client.chat.completions.create(
+        model="gpt-3.5-turbo", 
+        messages=[
+            {"role": "system", "content": prompt},
+            {"role": "user", "content": user_message}
+        ],
+        max_tokens=4000
+    )
     print("openai response:", openai_response)
-    response_text = openai_response.choices[0].text
+    response_text = openai_response.choices[0].message.content
     return clean_text(response_text)
 
 
